@@ -1,0 +1,61 @@
+﻿@inject GroupProject421_521.Data.ApplicationDbContext _context
+@model IEnumerable<GroupProject421_521.Models.Users>
+@{
+    ViewData["Title"] = "Admin Page";   
+}
+
+<h1> Admin Page </h1>
+
+<h2>Reports</h2>
+@{
+    // Querying directly in the view
+    var totalUsers = _context.Users.Count();
+    var newestUser = _context.Users
+        .OrderByDescending(u => u.CreatedAt)
+        .FirstOrDefault();
+    var oldestUser = _context.Users
+        .OrderBy(u => u.CreatedAt)
+        .FirstOrDefault();
+}
+
+<p>Total Users: @totalUsers</p>
+
+@if (newestUser != null)
+{
+    <p>Newest User: @newestUser.Email (Joined: @newestUser.CreatedAt?.ToString("yyyy-MM-dd"))</p>
+}
+
+@if (oldestUser != null)
+{
+    <p>Oldest User: @oldestUser.Email (Joined: @oldestUser.CreatedAt?.ToString("yyyy-MM-dd"))</p>
+}
+
+<table class="table">
+    <thead>
+        <tr>
+            <th> User ID: </th>
+            <th> Username: </th>
+            <th> Email: </th>
+            <th> Admin Status: </th>
+            <th> Account Holder Since: </th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach(var user in Model)
+        {
+            <tr>
+                <td> @user.UserID</td>
+                <td> @user.Username</td>
+                <td> @user.Email</td>
+                <td> @(user.IsAdmin == true ? "Yes" : "No") </td>
+                <td>
+                    <a asp-controller="Users" asp-action="Edit" asp-route-id="@user.UserID">Edit</a> |
+                    <a asp-controller="Users" asp-action="Details" asp-route-id="@user.UserID">Details</a> |
+                    <a asp-controller="Users" asp-action="Delete" asp-route-id="@user.UserID">Delete</a>
+                </td>
+                <td> @user.CreatedAt?.ToString("yyyy-MM- dd") </td>
+            </tr>
+        }
+    </tbody>
+</table>
+

@@ -1,0 +1,163 @@
+﻿@model IEnumerable<GroupProject421_521.Models.UserPrompt>
+
+@{
+    ViewData["Title"] = "Saved Suggestions";
+}
+
+<h2 class="mb-4">Previous Suggestions</h2>
+
+
+<div class="mb-3 d-flex gap-2">
+    <input type="text" id="searchInput" class="form-control" placeholder="Search prompts...">
+
+    
+    <div class="dropdown">
+        <button class="btn btn-secondary btn-sm dropdown-toggle" type="button" id="filterSortButton" data-bs-toggle="dropdown" aria-expanded="false">
+            Sort & Filter ▼
+        </button>
+        <ul class="dropdown-menu" aria-labelledby="filterSortButton">
+            <li><a class="dropdown-item" href="#" data-sort="newest" data-value="all">Newest (All Time)</a></li>
+            <li><a class="dropdown-item" href="#" data-sort="oldest" data-value="all">Oldest (All Time)</a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item" href="#" data-sort="newest" data-value="7">Newest (Past 7 Days)</a></li>
+            <li><a class="dropdown-item" href="#" data-sort="oldest" data-value="7">Oldest (Past 7 Days)</a></li>
+            <li><a class="dropdown-item" href="#" data-sort="newest" data-value="30">Newest (Past 30 Days)</a></li>
+            <li><a class="dropdown-item" href="#" data-sort="oldest" data-value="30">Oldest (Past 30 Days)</a></li>
+        </ul>
+    </div>
+</div>
+
+@if (Model != null && Model.Any())
+{
+    <div class="list-group" id="suggestionsList">
+        @foreach (var suggestion in Model)
+        {
+            var promptText = suggestion.PromptText ?? string.Empty;
+            var truncatedPrompt = promptText.Length > 50 ? promptText.Substring(0, 50) + "..." : promptText;
+            var formattedTime = suggestion.CreatedAt.ToString("yyyy-MM-dd"); 
+
+            var readableTime = suggestion.CreatedAt.ToString("MMM dd, yyyy hh:mm tt");
+            var searchableContent = $"{suggestion.PromptText} {suggestion.WineSuggestion}".ToLowerInvariant();
+
+            <div class="list-group-item d-flex justify-content-between align-items-center
+                        bg-light rounded-3 shadow-sm p-3 mb-3 suggestion-item"
+                 style="cursor:pointer;"
+                 data-bs-toggle="modal"
+                 data-bs-target="#detailsModal-@suggestion.Id"
+                 data-search="@searchableContent"
+                 data-date="@formattedTime">
+                
+
+                <span>
+                    <strong>Prompt:</strong> @truncatedPrompt
+                </span>
+            </div>
+
+          
+            <div class="modal fade"
+                 id="detailsModal-@suggestion.Id"
+                 tabindex="-1"
+                 aria-labelledby="detailsModalLabel-@suggestion.Id"
+                 aria-hidden="true">
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="detailsModalLabel-@suggestion.Id">
+                                Full Suggestion Details
+                            </h5>
+                            <button type="button"
+                                    class="btn-close"
+                                    data-bs-dismiss="modal"
+                                    aria-label="Close">
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <p><strong>Prompt:</strong> @suggestion.PromptText</p>
+                            <p><strong>Response:</strong> @suggestion.WineSuggestion</p>
+                            <p class="text-muted">
+                                <strong>Created On:</strong> @readableTime
+                            </p>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button"
+                                    class="btn btn-secondary"
+                                    data-bs-dismiss="modal">
+                                Close
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
+else
+{
+    <p>No previous suggestions.</p>
+}
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const searchInput = document.getElementById('searchInput');
+        const filterSortButton = document.getElementById('filterSortButton');
+        const dropdownItems = document.querySelectorAll('.dropdown-item');
+        const itemsContainer = document.getElementById("suggestionsList");
+        const items = document.querySelectorAll(".list-group-item.suggestion-item");
+
+        let filterValue = "all"; 
+        let sortOrder = "newest"; 
+
+        function filterAndSortSuggestions() {
+            const query = searchInput.value.toLowerCase().trim();
+            const currentDate = new Date();
+
+            let filteredItems = Array.from(items);
+
+            filteredItems.forEach(item => {
+                const searchContent = item.getAttribute('data-search') || '';
+                const itemDateStr = item.getAttribute('data-date') || '';
+                const itemDate = itemDateStr ? new Date(itemDateStr) : null;
+
+                let matchesSearch = query === "" || searchContent.includes(query);
+                let matchesTime = true;
+
+                if (filterValue !== "all" && itemDate) {
+                    const daysAgo = parseInt(filterValue, 10);
+                    const pastDate = new Date();
+                    pastDate.setDate(currentDate.getDate() - daysAgo);
+
+                    matchesTime = itemDate >= pastDate;
+                }
+
+                if (matchesSearch && matchesTime) {
+                    item.classList.remove("search-hidden");
+                } else {
+                    item.classList.add("search-hidden");
+                }
+            });
+
+            filteredItems = filteredItems.filter(item => !item.classList.contains("search-hidden"));
+            filteredItems.sort((a, b) => {
+                const dateA = new Date(a.getAttribute('data-date'));
+                const dateB = new Date(b.getAttribute('data-date'));
+
+                return sortOrder === "newest" ? dateB - dateA : dateA - dateB;
+            });
+
+            itemsContainer.innerHTML = "";
+            filteredItems.forEach(item => itemsContainer.appendChild(item));
+        }
+
+        dropdownItems.forEach(item => {
+            item.addEventListener('click', function (e) {
+                e.preventDefault();
+                filterValue = this.getAttribute('data-value');
+                sortOrder = this.getAttribute('data-sort');
+                filterSortButton.textContent = `Sort & Filter: ${this.textContent} ▼`; 
+                filterAndSortSuggestions();
+            });
+        });
+
+        searchInput.addEventListener('input', filterAndSortSuggestions);
+    });
+</script>

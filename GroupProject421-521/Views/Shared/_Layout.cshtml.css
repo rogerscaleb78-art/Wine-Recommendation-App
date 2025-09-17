@@ -1,0 +1,58 @@
+﻿/* Please see documentation at https://learn.microsoft.com/aspnet/core/client-side/bundling-and-minification
+for details on configuring this project to bundle and minify static web assets. */
+
+body {
+    font-family: 'Georgia', serif; /* Elegant serif font for a classy look */
+    background-color: #f9f5f0; /* Light beige background resembling parchment */
+    color: #4d2c2c; /* Dark wine-red text */
+}
+
+a {
+    color: #7b1e1e; /* Deep wine color for links */
+    text-decoration: none; /* Remove underline */
+}
+
+    a:hover {
+        color: #a83232; /* Lighter wine color for hover effect */
+    }
+
+.navbar {
+    background-color: #4d2c2c; /* Dark wine-red background */
+    color: #ffffff; /* White text for contrast */
+}
+
+.navbar-brand {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #fff; /* Ensure brand text is visible */
+}
+
+.navbar-nav .nav-link {
+    color: #f8e9dc; /* Pale text for nav links */
+}
+
+    .navbar-nav .nav-link:hover {
+        color: #ffb347; /* Golden hue for hover */
+    }
+
+.btn-primary {
+    background-color: #7b1e1e; /* Deep wine color for buttons */
+    border-color: #4d2c2c;
+    color: #fff;
+}
+
+    .btn-primary:hover {
+        background-color: #a83232; /* Slightly brighter on hover */
+    }
+
+.footer {
+    background-color: #4d2c2c; /* Match the navbar */
+    color: #ffffff;
+    text-align: center;
+    padding: 10px 0;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    font-family: 'Playfair Display', serif; /* Luxurious display font for headings */
+    color: #4d2c2c;
+}
