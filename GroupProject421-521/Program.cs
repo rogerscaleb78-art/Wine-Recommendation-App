@@ -83,9 +83,11 @@ namespace GroupProject421_521
                 });
             }
 
-            // Use SQLite for local development to avoid Azure firewall issues
+            // SQLite database. The connection string comes from configuration
+            // (appsettings.json, user secrets or environment variables), so no
+            // credentials are stored in source control.
             builder.Services.AddDbContext<ApplicationDbContext>(options =>
-                options.UseSqlite("Data Source=wineapp.db"));
+                options.UseSqlite(connectionString));
             
             // Ensure database is created
             using (var scope = builder.Services.BuildServiceProvider().CreateScope())

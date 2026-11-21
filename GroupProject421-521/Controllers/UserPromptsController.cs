@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using GroupProject421_521.Data;
 using GroupProject421_521.Models;
+using GroupProject421_521.Services;
 using System.Security.Claims;
 
 namespace GroupProject421_521.Controllers
@@ -46,7 +47,7 @@ namespace GroupProject421_521.Controllers
                 // Simulate API delay for realistic experience
                 await Task.Delay(1500);
 
-                var recommendation = AnalyzeUserInput(userPrompt);
+                var recommendation = WineRecommender.Recommend(userPrompt);
                 return recommendation;
             }
             catch (Exception ex)
@@ -54,80 +55,6 @@ namespace GroupProject421_521.Controllers
                 Console.WriteLine($"Exception in GetWineRecommendation: {ex.Message}");
                 return "An error occurred while generating the wine recommendation.";
             }
-        }
-
-        private string AnalyzeUserInput(string userInput)
-        {
-            var input = userInput.ToLower();
-            var recommendations = new List<string>();
-
-            // Mood-based recommendations
-            if (ContainsAny(input, new[] { "celebrat", "party", "happy", "excit", "cheer" }))
-            {
-                recommendations.Add("🍾 **Champagne or Prosecco** - Perfect for celebrations! The bubbles and crisp acidity will enhance your joyful mood. Try a Brut Champagne or Italian Prosecco.");
-            }
-            else if (ContainsAny(input, new[] { "relax", "unwind", "stress", "tired", "calm" }))
-            {
-                recommendations.Add("🍷 **Pinot Noir** - A gentle, smooth red wine perfect for relaxation. Its soft tannins and cherry notes will help you unwind.");
-            }
-            else if (ContainsAny(input, new[] { "romantic", "date", "love", "intimate" }))
-            {
-                recommendations.Add("🌹 **Rosé Wine** - Elegant and romantic, a dry rosé from Provence or a sparkling rosé would be perfect for your special moment.");
-            }
-
-            // Weather-based recommendations
-            if (ContainsAny(input, new[] { "hot", "summer", "warm", "sunny", "beach" }))
-            {
-                recommendations.Add("🥂 **Sauvignon Blanc or Pinot Grigio** - Crisp, refreshing white wines perfect for warm weather. They'll cool you down beautifully.");
-            }
-            else if (ContainsAny(input, new[] { "cold", "winter", "snow", "cozy", "fireplace" }))
-            {
-                recommendations.Add("🔥 **Cabernet Sauvignon or Malbec** - Rich, full-bodied reds that will warm you up on cold days. Perfect with hearty meals.");
-            }
-
-            // Food pairing recommendations
-            if (ContainsAny(input, new[] { "steak", "beef", "meat", "bbq", "grill" }))
-            {
-                recommendations.Add("🥩 **Cabernet Sauvignon or Syrah** - Bold reds that pair perfectly with red meat. The tannins will complement the richness of your meal.");
-            }
-            else if (ContainsAny(input, new[] { "fish", "seafood", "salmon", "shrimp", "lobster" }))
-            {
-                recommendations.Add("🐟 **Chardonnay or Pinot Grigio** - Light, crisp whites that won't overpower delicate seafood flavors.");
-            }
-            else if (ContainsAny(input, new[] { "pasta", "pizza", "italian", "tomato" }))
-            {
-                recommendations.Add("🍝 **Chianti or Sangiovese** - Italian reds that are perfect with tomato-based dishes and pasta.");
-            }
-            else if (ContainsAny(input, new[] { "cheese", "appetizer", "snack" }))
-            {
-                recommendations.Add("🧀 **Riesling or Pinot Noir** - Versatile wines that pair beautifully with various cheeses and appetizers.");
-            }
-
-            // Occasion-based recommendations
-            if (ContainsAny(input, new[] { "dinner", "meal", "cooking" }))
-            {
-                recommendations.Add("🍽️ **Consider the main dish** - For red meat, choose a bold red. For fish or chicken, a crisp white or light red works well.");
-            }
-            else if (ContainsAny(input, new[] { "dessert", "sweet", "chocolate" }))
-            {
-                recommendations.Add("🍰 **Port or Moscato** - Sweet wines that complement desserts beautifully. A Ruby Port with chocolate is divine!");
-            }
-
-            // Default recommendation if no specific context found
-            if (recommendations.Count == 0)
-            {
-                recommendations.Add("🍷 **Pinot Noir** - A versatile, crowd-pleasing wine that works well in most situations. It's smooth, approachable, and pairs with many foods.");
-            }
-
-            // Add general wine wisdom
-            recommendations.Add("\n💡 **Pro Tip**: Serve red wines slightly below room temperature (60-65°F) and white wines chilled (45-50°F) for the best experience.");
-
-            return string.Join("\n\n", recommendations);
-        }
-
-        private bool ContainsAny(string input, string[] keywords)
-        {
-            return keywords.Any(keyword => input.Contains(keyword));
         }
 
         // POST
