@@ -1,15 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.EntityFrameworkCore;
 using GroupProject421_521.Data;
 using GroupProject421_521.Models;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace GroupProject421_521.Controllers
 {
+    /// <summary>
+    /// CRUD pages for the wine catalog.
+    /// </summary>
     public class WinesController : Controller
     {
         private readonly ApplicationDbContext _context;
@@ -44,17 +42,15 @@ namespace GroupProject421_521.Controllers
         }
 
         // GET: Wines/Create
-        public IActionResult Create() //gets the page
+        public IActionResult Create()
         {
             return View();
         }
 
         // POST: Wines/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("WineID,Name,Type,Region,Description,FlavorProfile,Price")] Wine wine) //does the work (marked by httpPOSt and has a body)
+        public async Task<IActionResult> Create([Bind("WineID,Name,Type,Region,Description,FlavorProfile,Price")] Wine wine)
         {
             if (ModelState.IsValid)
             {
@@ -82,8 +78,6 @@ namespace GroupProject421_521.Controllers
         }
 
         // POST: Wines/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(int id, [Bind("WineID,Name,Type,Region,Description,FlavorProfile,Price")] Wine wine)

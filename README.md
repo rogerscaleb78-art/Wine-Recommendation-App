@@ -1,192 +1,112 @@
-# Wine App - Wine Recommendation System
+# SipSmart: Wine Recommendation App
 
-**Created:** November 2024  
-**Project Type:** ASP.NET Core Web Application  
-**Framework:** .NET 8.0
+[![CI](https://github.com/rogerscaleb78-art/Wine-Recommendation-App/actions/workflows/ci.yml/badge.svg)](https://github.com/rogerscaleb78-art/Wine-Recommendation-App/actions/workflows/ci.yml)
 
-## Overview
+An ASP.NET Core MVC web app that suggests wines based on what the user types: their mood, the weather, the food they're serving, or the occasion. Users can browse a wine catalog, keep a history of their recommendations, and manage wines through a full CRUD interface.
 
-Wine App is a comprehensive wine recommendation and management system built with ASP.NET Core MVC. The application allows users to browse wines, receive personalized recommendations, save their preferences, and manage their wine collection. It features user authentication, wine catalog management, and an intelligent suggestion system.
+Built as a team project (November 2024) and later extended with automated tests and continuous integration.
 
-This project was developed as an educational endeavor to expand beyond the fundamentals of web development, exploring advanced concepts including multi-provider authentication, complex data relationships, modern architectural patterns, and real-world application development practices.
+## My role
 
-## Features
+I worked on the **C# backend**: the application logic in the controllers and the recommendation engine, and the data layer that talks to the database through Entity Framework Core.
 
-### 🍷 Core Functionality
-- **Wine Catalog**: Browse and manage a comprehensive database of wines
-- **Wine Recommendations**: AI-powered wine suggestions based on user preferences
-- **User Profiles**: Personalized user accounts with saved preferences
-- **Saved Suggestions**: Users can save and revisit wine recommendations
-- **Admin Panel**: Administrative interface for user and content management
+After the course ended I came back to the project to:
 
-### 🔐 Authentication & Security
-- **Multi-Provider Authentication**: Support for Google, Facebook, and Microsoft OAuth
-- **Cookie-based Authentication**: Secure session management
-- **User Identity Management**: Built on ASP.NET Core Identity
-- **Protected Routes**: Secure access to user-specific features
+- pull the recommendation logic out of the controller into a testable service class
+- add an xUnit test suite and a GitHub Actions CI pipeline
+- remove a hard-coded database password from the configuration
+- fix bugs: the admin page showed every user's details to anyone (and crashed when the user table was empty), and creating a user redirected to a page that didn't exist
+- clean up leftover scaffolding, unused files and commented-out code
 
-### 📊 Data Management
-- **SQLite Database**: Local development database for easy setup
-- **Entity Framework Core**: Modern ORM for data access
-- **CRUD Operations**: Full Create, Read, Update, Delete functionality for all entities
+## Skills demonstrated
 
-## Technology Stack
+C# · .NET 8 · ASP.NET Core MVC · Entity Framework Core · SQL / SQLite · REST & JSON endpoints · OAuth · xUnit · Git · GitHub Actions CI/CD · Azure App Service
 
-- **Backend**: ASP.NET Core 8.0 MVC
-- **Database**: SQLite (development), SQL Server (production ready)
-- **ORM**: Entity Framework Core 8.0
-- **Authentication**: ASP.NET Core Identity with OAuth providers
-- **Frontend**: Razor Pages, Bootstrap 5, jQuery
-- **External APIs**: Google OAuth, Facebook OAuth, Microsoft OAuth
+## Highlights
 
-## Project Structure
+- **C# backend on .NET 8**: ASP.NET Core MVC with Entity Framework Core and SQLite
+- **Recommendation engine**: rule-based keyword matching across four categories (mood, weather, food pairing, occasion), isolated in its own service class so it can be unit tested
+- **Soft deletes**: removed prompts are flagged rather than erased, so recommendation history is preserved
+- **Admin page**: lists all users, restricted to accounts flagged as admins
+- **Authentication**: ASP.NET Core Identity, with optional Google, Facebook and Microsoft sign-in
+- **Automated tests**: xUnit tests covering the recommendation engine and the controllers, run against an in-memory SQLite database
+- **CI pipeline**: GitHub Actions builds and tests every push and pull request on Windows, macOS and Linux
+
+## Tech stack
+
+| Area | Tools |
+|---|---|
+| Language | C# |
+| Framework | ASP.NET Core 8 MVC, Razor views |
+| Data | Entity Framework Core 8, SQLite |
+| Auth | ASP.NET Core Identity, OAuth (Google / Facebook / Microsoft) |
+| Front end | Bootstrap 5, jQuery |
+| Testing | xUnit, SQLite in-memory |
+| CI/CD | GitHub Actions (build + test matrix, Azure deploy workflow) |
+
+## How the recommendations work
+
+`Services/WineRecommender.cs` lowercases the user's text and checks it against keyword lists in four categories. Each category contributes at most one suggestion, so a prompt like *"a hot summer celebration with shrimp"* returns sparkling wine (mood), a crisp white (weather) and a seafood pairing (food). If nothing matches, it falls back to a versatile default (Pinot Noir), and every response ends with a serving-temperature tip.
+
+## Project structure
 
 ```
-GroupProject421-521/
-├── Controllers/           # MVC Controllers
-│   ├── HomeController.cs     # Main application controller
-│   ├── WinesController.cs    # Wine management
-│   ├── UserPromptsController.cs # User recommendation prompts
-│   └── UsersController.cs    # User management
-├── Models/               # Data models
-│   ├── Wine.cs              # Wine entity
-│   ├── UserPrompt.cs        # User recommendation prompts
-│   ├── SavedWine.cs         # Saved wine preferences
-│   └── Users.cs             # User entity
-├── Views/                # Razor view templates
-│   ├── Home/                # Home page views
-│   ├── Wines/               # Wine management views
-│   ├── UserPrompts/         # User prompt views
-│   └── Shared/              # Shared layout and partials
-├── Data/                 # Database context
-│   └── ApplicationDbContext.cs
-├── Areas/                # Identity area for authentication
-└── wwwroot/              # Static files (CSS, JS, images)
+├── GroupProject421-521/          # Web application
+│   ├── Controllers/              # Wines, UserPrompts, Users, Home
+│   ├── Services/                 # WineRecommender (recommendation logic)
+│   ├── Models/                   # Wine, UserPrompt, Users, form models
+│   ├── Data/                     # ApplicationDbContext (EF Core)
+│   ├── Views/                    # Razor views
+│   └── wwwroot/                  # Static assets
+├── tests/
+│   └── GroupProject421-521.Tests/  # xUnit test project
+└── .github/workflows/
+    ├── ci.yml                    # Build + test on Windows, macOS, Linux
+    └── master_sipsmart.yml       # Deploy to Azure App Service
 ```
 
-## Key Models
+## Running locally
 
-### Wine
-- **WineID**: Unique identifier
-- **Name**: Wine name
-- **Type**: Wine type (Red, White, Rosé, etc.)
-- **Region**: Geographic origin
-- **Description**: Detailed wine description
-- **FlavorProfile**: Taste characteristics
-- **Price**: Wine price
+**Prerequisites:** [.NET 8 SDK](https://dotnet.microsoft.com/download)
 
-### UserPrompt
-- **Id**: Unique identifier
-- **UserId**: Associated user ID
-- **PromptText**: User's wine preference query
-- **Preferences**: User's wine preferences
-- **WineSuggestion**: Generated wine recommendation
-- **CreatedAt**: Timestamp of creation
-- **IsDeleted**: Soft delete flag
-
-## Getting Started
-
-### Prerequisites
-- .NET 8.0 SDK
-- Visual Studio 2022 or VS Code
-- Git
-
-### Installation
-
-1. **Clone the repository**
-   ```bash
-   git clone [repository-url]
-   cd Wine-App
-   ```
-
-2. **Navigate to the project directory**
-   ```bash
-   cd GroupProject421-521
-   ```
-
-3. **Restore dependencies**
-   ```bash
-   dotnet restore
-   ```
-
-4. **Configure authentication (optional)**
-   - Add OAuth credentials to `appsettings.json` or user secrets
-   - Configure Google, Facebook, or Microsoft OAuth if desired
-
-5. **Run the application**
-   ```bash
-   dotnet run
-   ```
-
-6. **Access the application**
-   - Open browser to `https://localhost:5001` or `http://localhost:5000`
-
-## Configuration
-
-### Authentication Setup
-The application supports multiple OAuth providers. Configure them in `appsettings.json`:
-
-```json
-{
-  "Google": {
-    "ClientIdKey": "your-google-client-id",
-    "SecretKey": "your-google-secret"
-  },
-  "Authentication": {
-    "Facebook": {
-      "AppId": "your-facebook-app-id",
-      "AppSecret": "your-facebook-app-secret"
-    },
-    "Microsoft": {
-      "ClientId": "your-microsoft-client-id",
-      "ClientSecret": "your-microsoft-client-secret"
-    }
-  }
-}
+```bash
+git clone https://github.com/rogerscaleb78-art/Wine-Recommendation-App.git
+cd Wine-Recommendation-App
+dotnet run --project GroupProject421-521
 ```
 
-### Database Configuration
-The application uses SQLite for local development. The database file (`wineapp.db`) will be created automatically on first run.
+Then open the URL printed in the terminal (for example `https://localhost:5001`). The SQLite database (`wineapp.db`) is created automatically if it doesn't exist.
 
-## Usage
+### Optional: social sign-in
 
-### For End Users
-1. **Register/Login**: Create an account or sign in with OAuth providers
-2. **Browse Wines**: Explore the wine catalog with detailed information
-3. **Get Recommendations**: Submit preferences to receive wine suggestions
-4. **Save Favorites**: Save recommended wines for future reference
-5. **View History**: Access previously saved suggestions
+OAuth providers are only enabled when credentials are configured. Keep them out of source control by using [user secrets](https://learn.microsoft.com/aspnet/core/security/app-secrets):
 
-### For Administrators
-1. **User Management**: View and manage user accounts
-2. **Wine Management**: Add, edit, or remove wines from the catalog
-3. **System Monitoring**: Access admin dashboard for system overview
+```bash
+cd GroupProject421-521
+dotnet user-secrets set "Google:ClientIdKey" "<your-client-id>"
+dotnet user-secrets set "Google:SecretKey" "<your-secret>"
+dotnet user-secrets set "Authentication:Facebook:AppId" "<your-app-id>"
+dotnet user-secrets set "Authentication:Facebook:AppSecret" "<your-app-secret>"
+dotnet user-secrets set "Authentication:Microsoft:ClientId" "<your-client-id>"
+dotnet user-secrets set "Authentication:Microsoft:ClientSecret" "<your-client-secret>"
+```
 
-## Development Notes
+## Running the tests
 
-- **Database**: Uses Entity Framework Core with SQLite for development
-- **Authentication**: Implements ASP.NET Core Identity with optional OAuth
-- **Security**: Includes CSRF protection and secure authentication flows
-- **Responsive Design**: Bootstrap-based responsive UI
-- **Error Handling**: Comprehensive error handling and logging
+```bash
+dotnet test
+```
 
-## Future Enhancements
+The test suite covers:
 
-- Wine rating and review system
-- Advanced recommendation algorithms
-- Wine pairing suggestions
-- Social features for sharing recommendations
-- Mobile application
-- Wine inventory tracking
+- **Recommendation engine**: keyword matching for every category, case-insensitivity, combining categories, first-match-wins within a category, the default fallback, and the serving tip
+- **WinesController**: details lookups (missing ID, unknown wine, existing wine), creating wines with valid and invalid input, and deleting
+- **UserPromptsController**: hiding soft-deleted prompts, newest-first ordering, and soft delete leaving the row in place
 
-## License
+Each controller test gets a fresh in-memory SQLite database, so the tests are isolated and need no external services.
 
-This project is created for educational purposes as part of a group project (GroupProject421-521).
+## Possible next steps
 
-## Support
-
-This is a demonstration project created in November 2024. For questions or issues, please refer to the project documentation or contact the development team.
-
----
-
-*Note: This application is designed for viewing and demonstration purposes. It showcases modern web development practices using ASP.NET Core, Entity Framework, and modern authentication patterns.*
+- Swap the keyword engine for a call to an LLM API, keeping the rule-based engine as a fallback
+- Ratings and reviews for wines
+- Link saved recommendations to specific wines in the catalog
