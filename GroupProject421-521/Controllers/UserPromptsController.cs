@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using GroupProject421_521.Data;
 using GroupProject421_521.Models;
@@ -7,6 +7,10 @@ using System.Security.Claims;
 
 namespace GroupProject421_521.Controllers
 {
+    /// <summary>
+    /// Handles wine recommendation requests and the history of past prompts.
+    /// Deleting a prompt is a soft delete: the row stays but is hidden.
+    /// </summary>
     public class UserPromptsController : Controller
     {
         private readonly ApplicationDbContext _context;
@@ -16,12 +20,12 @@ namespace GroupProject421_521.Controllers
             _context = context;
         }
 
-        // GET: UserPrompts (Only Show Non-Deleted Prompts)
+        // GET: UserPrompts (newest first, soft-deleted prompts hidden)
         public async Task<IActionResult> Index()
         {
             var prompts = await _context.UserPrompt
-                .Where(p => !p.IsDeleted)  
-                .OrderByDescending(p => p.CreatedAt) 
+                .Where(p => !p.IsDeleted)
+                .OrderByDescending(p => p.CreatedAt)
                 .ToListAsync();
 
             return View(prompts);
@@ -33,18 +37,18 @@ namespace GroupProject421_521.Controllers
             if (id == null) return NotFound();
 
             var userPrompt = await _context.UserPrompt
-                .FirstOrDefaultAsync(m => m.Id == id && !m.IsDeleted); 
+                .FirstOrDefaultAsync(m => m.Id == id && !m.IsDeleted);
 
             if (userPrompt == null) return NotFound();
             return View(userPrompt);
         }
 
-        // Free Wine Recommendation System
-        private async Task<string> GetWineRecommendation(string userPrompt)
+        // Builds a recommendation for the user's text. The short delay mimics the
+        // response time of an external API, which the suggestions page displays.
+        private static async Task<string> GetWineRecommendation(string userPrompt)
         {
             try
             {
-                // Simulate API delay for realistic experience
                 await Task.Delay(1500);
 
                 var recommendation = WineRecommender.Recommend(userPrompt);
@@ -57,14 +61,16 @@ namespace GroupProject421_521.Controllers
             }
         }
 
-        // POST
+        // POST: UserPrompts/AskGPT
+        // Called from the suggestions page with a JSON body: { "prompt": "..." }.
+        // Returns the recommendation as JSON and saves it to the user's history.
         [HttpPost]
         public async Task<IActionResult> AskGPT([FromBody] dynamic request)
         {
             var startTime = DateTime.UtcNow;
             try
             {
-                // Handle both System.Text.Json and Newtonsoft.Json formats
+                // Accept the body whether it was parsed by System.Text.Json or Newtonsoft.Json.
                 string prompt = "";
                 if (request is System.Text.Json.JsonElement jsonElement)
                 {
@@ -72,7 +78,6 @@ namespace GroupProject421_521.Controllers
                 }
                 else
                 {
-                    // Fallback for Newtonsoft.Json
                     prompt = request.prompt?.ToString() ?? "";
                 }
 
@@ -88,7 +93,7 @@ namespace GroupProject421_521.Controllers
                     PromptText = prompt,
                     Preferences = "",
                     WineSuggestion = apiResponse,
-                    CreatedAt = DateTime.UtcNow 
+                    CreatedAt = DateTime.UtcNow
                 };
 
                 _context.Add(userPrompt);
@@ -98,9 +103,8 @@ namespace GroupProject421_521.Controllers
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error: {ex.Message}");
-                Console.WriteLine($"Stack Trace: {ex.StackTrace}");
-                return Json(new { success = false, error = $"An unexpected error occurred: {ex.Message}" });
+                Console.WriteLine($"AskGPT failed: {ex}");
+                return Json(new { success = false, error = "An unexpected error occurred. Please try again." });
             }
         }
 
@@ -114,7 +118,7 @@ namespace GroupProject421_521.Controllers
                 try
                 {
                     userPrompt.WineSuggestion = await GetWineRecommendation(userPrompt.PromptText + " " + userPrompt.Preferences);
-                    userPrompt.CreatedAt = DateTime.UtcNow; // ✅ Fix missing timestamps
+                    userPrompt.CreatedAt = DateTime.UtcNow;
 
                     _context.Add(userPrompt);
                     await _context.SaveChangesAsync();
@@ -176,7 +180,7 @@ namespace GroupProject421_521.Controllers
             return View(userPrompt);
         }
 
-        // POST: UserPrompts/Delete/5 (Soft Delete)
+        // POST: UserPrompts/Delete/5 (soft delete)
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
@@ -184,7 +188,7 @@ namespace GroupProject421_521.Controllers
             var userPrompt = await _context.UserPrompt.FindAsync(id);
             if (userPrompt != null)
             {
-                userPrompt.IsDeleted = true; // ✅ Soft delete
+                userPrompt.IsDeleted = true;
                 _context.UserPrompt.Update(userPrompt);
             }
 

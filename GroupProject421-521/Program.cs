@@ -1,10 +1,8 @@
 using GroupProject421_521.Data;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
 using Google.Apis.Auth.AspNetCore3;
 using Microsoft.AspNetCore.Authentication.Cookies;
-
-
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 
 namespace GroupProject421_521
 {
@@ -13,100 +11,35 @@ namespace GroupProject421_521
         public static void Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
-
-            // Add services to the container.
-            var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
-
-            //if key-value pairs are nested in other objects (ex., Google), then you'll need a colon to separate them
-            var googleClientId = builder.Configuration["Google:ClientIdKey"];
-            var googleSecret = builder.Configuration["Google:SecretKey"];
-            //var facebookClientId = builder.Configuration["Facebook:AppId"];
-            //var facebookSecret = builder.Configuration["Facebook:AppSecret"];
-            
-            // Only configure Google OAuth if credentials are provided
-            if (!string.IsNullOrEmpty(googleClientId) && !string.IsNullOrEmpty(googleSecret))
-            {
-                // This configures Google.Apis.Auth.AspNetCore3 for use in this app.
-                builder.Services
-                    .AddAuthentication(o =>
-                    {
-                        // This forces challenge results to be handled by Google OpenID Handler, so there's no
-                        // need to add an AccountController that emits challenges for Login.
-                        o.DefaultChallengeScheme = GoogleOpenIdConnectDefaults.AuthenticationScheme;
-                        // This forces forbid results to be handled by Google OpenID Handler, which checks if
-                        // extra scopes are required and does automatic incremental auth.
-                        o.DefaultForbidScheme = GoogleOpenIdConnectDefaults.AuthenticationScheme;
-                        // Default scheme that will handle everything else.
-                        // Once a user is authenticated, the OAuth2 token info is stored in cookies.
-                        o.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-                    })
-                    .AddCookie()
-                    .AddGoogleOpenIdConnect(options =>
-                    {
-                        options.ClientId = googleClientId;
-                        options.ClientSecret = googleSecret;
-                    });
-            }
-            else
-            {
-                // Configure basic authentication without external providers
-                builder.Services
-                    .AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
-                    .AddCookie();
-            }
-
-            
-            var services = builder.Services;
             var configuration = builder.Configuration;
+            var services = builder.Services;
 
-            // Only add Facebook authentication if credentials are provided
-            var facebookAppId = configuration["Authentication:Facebook:AppId"];
-            var facebookAppSecret = configuration["Authentication:Facebook:AppSecret"];
-            if (!string.IsNullOrEmpty(facebookAppId) && !string.IsNullOrEmpty(facebookAppSecret))
-            {
-                services.AddAuthentication().AddFacebook(facebookOptions =>
-                {
-                    facebookOptions.AppId = facebookAppId;
-                    facebookOptions.AppSecret = facebookAppSecret;
-                });
-            }
+            // Database: SQLite, using the connection string from configuration
+            // (appsettings.json, user secrets or environment variables).
+            var connectionString = configuration.GetConnectionString("DefaultConnection")
+                ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
 
-            // Only add Microsoft authentication if credentials are provided
-            var microsoftClientId = configuration["Authentication:Microsoft:ClientId"];
-            var microsoftClientSecret = configuration["Authentication:Microsoft:ClientSecret"];
-            if (!string.IsNullOrEmpty(microsoftClientId) && !string.IsNullOrEmpty(microsoftClientSecret))
-            {
-                services.AddAuthentication().AddMicrosoftAccount(microsoftOptions =>
-                {
-                    microsoftOptions.ClientId = microsoftClientId;
-                    microsoftOptions.ClientSecret = microsoftClientSecret;
-                });
-            }
-
-            // SQLite database. The connection string comes from configuration
-            // (appsettings.json, user secrets or environment variables), so no
-            // credentials are stored in source control.
-            builder.Services.AddDbContext<ApplicationDbContext>(options =>
+            services.AddDbContext<ApplicationDbContext>(options =>
                 options.UseSqlite(connectionString));
-            
-            // Ensure database is created
-            using (var scope = builder.Services.BuildServiceProvider().CreateScope())
+            services.AddDatabaseDeveloperPageExceptionFilter();
+
+            ConfigureAuthentication(services, configuration);
+
+            services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = true)
+                .AddEntityFrameworkStores<ApplicationDbContext>();
+            services.AddControllersWithViews();
+            services.AddHttpClient();
+
+            var app = builder.Build();
+
+            // Create the database schema on first run.
+            using (var scope = app.Services.CreateScope())
             {
                 var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
                 context.Database.EnsureCreated();
             }
-            builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
-            builder.Services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = true)
-                .AddEntityFrameworkStores<ApplicationDbContext>();
-            builder.Services.AddControllersWithViews();
-
-            builder.Services.AddHttpClient(); //MAKE SURE TO ADD THIS FOR FUTURE WEBPAGES
-
-
-            var app = builder.Build();
-
-            // Configure the HTTP request pipeline.
+            // HTTP request pipeline
             if (app.Environment.IsDevelopment())
             {
                 app.UseMigrationsEndPoint();
@@ -114,7 +47,6 @@ namespace GroupProject421_521
             else
             {
                 app.UseExceptionHandler("/Home/Error");
-                // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
                 app.UseHsts();
             }
 
@@ -131,6 +63,64 @@ namespace GroupProject421_521
             app.MapRazorPages();
 
             app.Run();
+        }
+
+        /// <summary>
+        /// Sets up cookie authentication, plus Google, Facebook and Microsoft sign-in
+        /// for any provider whose credentials are configured. Providers without
+        /// credentials are skipped, so the app runs locally with no OAuth setup.
+        /// </summary>
+        private static void ConfigureAuthentication(IServiceCollection services, IConfiguration configuration)
+        {
+            var googleClientId = configuration["Google:ClientIdKey"];
+            var googleSecret = configuration["Google:SecretKey"];
+
+            if (!string.IsNullOrEmpty(googleClientId) && !string.IsNullOrEmpty(googleSecret))
+            {
+                services
+                    .AddAuthentication(options =>
+                    {
+                        // Send sign-in challenges and permission checks to Google,
+                        // and keep the signed-in session in a cookie.
+                        options.DefaultChallengeScheme = GoogleOpenIdConnectDefaults.AuthenticationScheme;
+                        options.DefaultForbidScheme = GoogleOpenIdConnectDefaults.AuthenticationScheme;
+                        options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+                    })
+                    .AddCookie()
+                    .AddGoogleOpenIdConnect(options =>
+                    {
+                        options.ClientId = googleClientId;
+                        options.ClientSecret = googleSecret;
+                    });
+            }
+            else
+            {
+                services
+                    .AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+                    .AddCookie();
+            }
+
+            var facebookAppId = configuration["Authentication:Facebook:AppId"];
+            var facebookAppSecret = configuration["Authentication:Facebook:AppSecret"];
+            if (!string.IsNullOrEmpty(facebookAppId) && !string.IsNullOrEmpty(facebookAppSecret))
+            {
+                services.AddAuthentication().AddFacebook(options =>
+                {
+                    options.AppId = facebookAppId;
+                    options.AppSecret = facebookAppSecret;
+                });
+            }
+
+            var microsoftClientId = configuration["Authentication:Microsoft:ClientId"];
+            var microsoftClientSecret = configuration["Authentication:Microsoft:ClientSecret"];
+            if (!string.IsNullOrEmpty(microsoftClientId) && !string.IsNullOrEmpty(microsoftClientSecret))
+            {
+                services.AddAuthentication().AddMicrosoftAccount(options =>
+                {
+                    options.ClientId = microsoftClientId;
+                    options.ClientSecret = microsoftClientSecret;
+                });
+            }
         }
     }
 }

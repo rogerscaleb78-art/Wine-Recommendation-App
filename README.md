@@ -6,11 +6,28 @@ An ASP.NET Core MVC web app that suggests wines based on what the user types: th
 
 Built as a team project (November 2024) and later extended with automated tests and continuous integration.
 
+## My role
+
+I worked on the **C# backend**: the application logic in the controllers and the recommendation engine, and the data layer that talks to the database through Entity Framework Core.
+
+After the course ended I came back to the project to:
+
+- pull the recommendation logic out of the controller into a testable service class
+- add an xUnit test suite and a GitHub Actions CI pipeline
+- remove a hard-coded database password from the configuration
+- fix bugs: the admin page showed every user's details to anyone (and crashed when the user table was empty), and creating a user redirected to a page that didn't exist
+- clean up leftover scaffolding, unused files and commented-out code
+
+## Skills demonstrated
+
+C# · .NET 8 · ASP.NET Core MVC · Entity Framework Core · SQL / SQLite · REST & JSON endpoints · OAuth · xUnit · Git · GitHub Actions CI/CD · Azure App Service
+
 ## Highlights
 
 - **C# backend on .NET 8**: ASP.NET Core MVC with Entity Framework Core and SQLite
 - **Recommendation engine**: rule-based keyword matching across four categories (mood, weather, food pairing, occasion), isolated in its own service class so it can be unit tested
 - **Soft deletes**: removed prompts are flagged rather than erased, so recommendation history is preserved
+- **Admin page**: lists all users, restricted to accounts flagged as admins
 - **Authentication**: ASP.NET Core Identity, with optional Google, Facebook and Microsoft sign-in
 - **Automated tests**: xUnit tests covering the recommendation engine and the controllers, run against an in-memory SQLite database
 - **CI pipeline**: GitHub Actions builds and tests every push and pull request on Windows, macOS and Linux
@@ -37,7 +54,7 @@ Built as a team project (November 2024) and later extended with automated tests 
 ├── GroupProject421-521/          # Web application
 │   ├── Controllers/              # Wines, UserPrompts, Users, Home
 │   ├── Services/                 # WineRecommender (recommendation logic)
-│   ├── Models/                   # Wine, UserPrompt, Users, view models
+│   ├── Models/                   # Wine, UserPrompt, Users, form models
 │   ├── Data/                     # ApplicationDbContext (EF Core)
 │   ├── Views/                    # Razor views
 │   └── wwwroot/                  # Static assets
